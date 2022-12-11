@@ -1,65 +1,52 @@
 #pragma once
 #include "ComplexVector.h"
-/// <summary>
-/// Matrix
-/// </summary>
-/// <returns></returns>
-class ComplexMatrix
-{
-	ComplexVector* vec=nullptr;
-	int n = 2, m = 2;
-	int state = 0;
+
+class MatrixDouble {
+	VectorDouble* DoubleArray;
+	int n, size;
+	int codeError;
+	static int num_matrix;
 public:
-	ComplexMatrix() : ComplexMatrix(2) {}
-	ComplexMatrix(int n) : ComplexMatrix(n, n) {};
-	ComplexMatrix(int n, int m) : ComplexMatrix(n, n, 0) {};
-	ComplexMatrix(int n, int m, ComplexDouble);
-	ComplexMatrix(const ComplexMatrix& s);
-	ComplexMatrix& operator=(const ComplexMatrix& s);
-	ComplexMatrix& operator=(ComplexMatrix&& s) noexcept;
-	~ComplexMatrix() {
-	//	std::cout << " del mat";
-		if (vec) delete[] vec;
-	}
-	void Input();
-	void Output();
-	friend istream& operator>>(istream& is, ComplexMatrix& s);
-	friend ostream& operator<<(ostream& os, ComplexMatrix& s);
-	// reload operators
-	bool operator!() const;   // true : v[i] != 0
-	bool operator~() const;   // true : all v[i] != 0
-	ComplexVector& operator[](int index);
+	MatrixDouble() { DoubleArray = nullptr; n = size = codeError = 0; }
+	MatrixDouble(int n);
+	MatrixDouble(int n, int size);
+	MatrixDouble(int n, int m, double a);
+	MatrixDouble(const MatrixDouble* s);
 
-	ComplexMatrix& operator+=(const ComplexMatrix& s);
-	ComplexMatrix& operator+=(const ComplexDouble& b);
-	ComplexMatrix& operator+=(const double& b);
+	double GetN();
+	double GetSIZE();
+	double GetCodeError();
 
-	ComplexMatrix operator+(const ComplexMatrix& b);
-	ComplexMatrix operator+(const ComplexDouble& b);
-	ComplexMatrix operator+(const double& b);
+	MatrixDouble& operator++(int);
+	MatrixDouble& operator--(int);
+	bool operator!() const;
+	MatrixDouble operator-();
 
-	ComplexMatrix& operator-=(const ComplexMatrix& s);
-	ComplexMatrix& operator-=(const ComplexDouble& b);
-	ComplexMatrix& operator-=(const double& b);
+	MatrixDouble& operator=(MatrixDouble& s);
 
-	ComplexMatrix operator-(const ComplexMatrix& b);
-	ComplexMatrix operator-(const ComplexDouble& b);
-	ComplexMatrix operator-(const double& b);
-	
-	ComplexMatrix& operator*=(const ComplexDouble& b);
-	ComplexMatrix& operator*=(const double& b);
+	MatrixDouble operator+(MatrixDouble b);
+	MatrixDouble operator+(int b);
+	MatrixDouble operator+(float b);
 
-	ComplexMatrix operator*(const ComplexMatrix& b);
-	ComplexVector operator*(const ComplexVector& b);
-	ComplexMatrix operator*(const ComplexDouble& b);
-	ComplexMatrix operator*(const double& b);
+	MatrixDouble operator-(MatrixDouble b);
+	MatrixDouble operator-(int b);
+	MatrixDouble operator-(float b);
 
+	MatrixDouble operator*(float b);
 
-	ComplexMatrix& operator/=(const ComplexDouble& b);
-	ComplexMatrix& operator/=(const double& b);
+	MatrixDouble operator/(int b);
 
-	ComplexMatrix operator/(const ComplexDouble& b);
-	ComplexMatrix operator/(const double& b);
+	MatrixDouble operator+=(MatrixDouble b);
+	MatrixDouble operator+=(float b);
 
-	void RandComplexMatrix();
+	MatrixDouble operator-=(MatrixDouble b);
+	MatrixDouble operator-=(float b);
+
+	MatrixDouble operator*=(float b);
+
+	MatrixDouble operator/=(int b);
+
+	double& operator[](int index);
+
+	void OutputMat();
 };

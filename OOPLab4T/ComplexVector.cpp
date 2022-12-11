@@ -1,434 +1,297 @@
+#include <iostream>
 #include "ComplexVector.h"
-ComplexDouble ComplexVector::badIndexRef=0;
-int ComplexVector::numVec =0;
-const double EpsCalculations = 1.e-5;
-ComplexDouble RandComplexDouble()
-{
-	return ComplexDouble(rand() % 10000 / (1.0 + rand() / 100), rand() % 10000 / (1.0 + rand() / 100));
-}
+#include <math.h>
 
-ComplexVector::ComplexVector(int n) {
-	if (n <= 0)    n = 2;  // default num =2;
+const double range = 1.e-5;
+
+VectorDouble::VectorDouble(int n) {
+	if (n <= 0) n = 1;
 	num = n;
-	v = new ComplexDouble[n];
+	Vec = new double[n];
 	for (int i = 0; i < n; i++) {
-		v[i] = 0.0;  //v[i]._Val[_RE]=0.0; v[i]._Val[_IM]=0.0;  
+		Vec[i] = 0.0;
 	}
 }
-ComplexVector::ComplexVector(int n, ComplexDouble& b) : ComplexVector(n) {
+VectorDouble::VectorDouble(int n, double b) : VectorDouble(n) {
 	for (int i = 0; i < num; i++) {
-		v[i] = b;
+		Vec[i] = b;
 	}
 }
-void ComplexVector::Init(int n) {
-	if (num != n) {
-		if (v != nullptr) delete[] v;
-		num = n;
-		v = new ComplexDouble[n];
-	}
-	for (int i = 0; i < num; i++) 	v[i] = 0;
-}
-void ComplexVector::Init(int n, ComplexDouble b) {
-	if (num != n) {
-		if (v != nullptr) delete[] v;
-		num = n;
-		v = new ComplexDouble[n];
-	}
-	for (int i = 0; i < num; i++) 	v[i] = b;
-}
-ComplexVector::ComplexVector(int n, ComplexDouble* p) : ComplexVector(n) {
-	if (p != nullptr)
-		for (int i = 0; i < num; i++)  // !!! dangerous code
-			v[i] = p[i];
-}
-ComplexVector::ComplexVector(const ComplexVector& s) {
-	// if (this == &s) return;  // the expression is used in the old standard
+VectorDouble::VectorDouble(VectorDouble& s){
 	num = s.num;
-	v = new ComplexDouble[num];
-	state = 1;
-	for (int i = 0; i < num; i++)   v[i] = s.v[i];
-}
-ComplexVector& ComplexVector::operator=(const ComplexVector& s) {
-	if (this == &s) return *this;
-	if (num != s.num)
-	{
-		if (v) delete[] v;
-		num = s.num;
-		v = new ComplexDouble[num];
-		state = 1;
+	Vec = new double[num];
+	for (int i = 0; i < num; i++) {
+		Vec[i] = s.Vec[i];
 	}
-	for (int i = 0; i < num; i++)   v[i] = s.v[i];
+}
+VectorDouble::VectorDouble(VectorDouble&& s) {
+	num = s.num;
+	Vec = new double[num];
+	for (int i = 0; i < num; i++) {
+		Vec[i] = s.Vec[i];
+	}
+}
+VectorDouble& VectorDouble::operator++(int){
+	for (int i = 0; i < num; i++) Vec[i] += 1;
 	return *this;
 }
-ComplexVector& ComplexVector::operator=(ComplexVector&& s) noexcept
-{
-	if (this == &s) return *this;
-	num = s.num; state = s.state;
-	if (this->v != nullptr) delete[] v;
-	v = s.v;
-	s.num = 0; s.v = nullptr; s.state = -1;
+VectorDouble& VectorDouble::operator--(int) {
+	for (int i = 0; i < num; i++) Vec[i] -= 1;
 	return *this;
 }
-
-void ComplexVector::Input() {
-	int in_num = 0;
-	do {
-		cout << "Input size Vec\n";
-		cin >> in_num;
-	} while (in_num <= 0);
-	if (num != in_num) {
-		num = in_num;
-		if (v) delete[] v;
-		v = new ComplexDouble[num];
-	}
-	cout << " v : real img  ";
-	cin >> *this;
-}
-void ComplexVector::Output() {
-	if (num != 0) {
-		std::cout << "vec = " << *this;
-	}
-}
-
-bool ComplexVector::operator!() const   // true : exist v[i] != 0
-{
+bool VectorDouble::operator!() const {  
 	for (int i = 0; i < num; i++)
-		if (fabs(v[i].real()) > EpsCalculations || fabs(v[i].imag()) > EpsCalculations)
+		if (fabs(Vec[i]) > range)
 			return true;
 	return false;
 }
-bool ComplexVector::operator~() const  // true : all  v[i] != 0
-{
+VectorDouble VectorDouble::operator-(){
+	VectorDouble tmp(*this);
+
 	for (int i = 0; i < num; i++)
-		if (fabs(v[i].real()) < EpsCalculations && fabs(v[i].imag()) < EpsCalculations)
-			return false;
-	return true;
-}
-
-ComplexDouble& ComplexVector::operator[](int index)
-{
-	if (index >= 0 && index < num) return v[index];
-	cout << " Error : operator[] - index out of range \n";
-	return badIndexRef;
-}
-
-ComplexVector& ComplexVector::operator++()
-{
-	for (int i = 0; i < num; i++) v[i] += 1;
+		tmp[i] = -Vec[i];
+	for (int i = 0; i < num; i++)
+		Vec[i] = tmp[i];
 	return *this;
 }
-
-ComplexVector& ComplexVector::operator+=(const ComplexVector& b)
-{
+VectorDouble& VectorDouble::operator=(VectorDouble& s) {
+	if (this == &s) return *this;
+	if (num != s.num){
+		if (Vec) delete[] Vec;
+		num = s.num;
+		Vec = new double[num];
+		codeError = 1;
+	}
+	for (int i = 0; i < num; i++)   Vec[i] = s.Vec[i];
+	return *this;
+}
+VectorDouble& VectorDouble::operator=(VectorDouble&& s) {
+	if (this == &s) return *this;
+	if (num != s.num) {
+		if (Vec) delete[] Vec;
+		num = s.num;
+		Vec = new double[num];
+		codeError = 1;
+	}
+	for (int i = 0; i < num; i++)   Vec[i] = s.Vec[i];
+	return *this;
+}
+VectorDouble VectorDouble::operator+(VectorDouble b){
+	VectorDouble tmp(*this);
+	tmp += b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator+(double b) {
+	VectorDouble tmp(*this);
+	for (int i = 0; i < num; i++) tmp[i] += b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator-(VectorDouble b){
+	VectorDouble tmp(*this);
+	tmp -= b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator-(double b) {
+	VectorDouble tmp(*this);
+	for (int i = 0; i < num; i++) tmp[i] -= b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator*(int b) {
+	VectorDouble tmp(*this);
+	for (int i = 0; i < num; i++) tmp[i] *= b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator*(double b) {
+	VectorDouble tmp(*this);
+	for (int i = 0; i < num; i++) tmp[i] *= b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator/(int b) {
+	VectorDouble tmp(*this);
+	for (int i = 0; i < num; i++) tmp[i] /= b;
+	return tmp;
+}
+VectorDouble VectorDouble::operator/(double b) {
+	VectorDouble tmp(*this);
+	for (int i = 0; i < num; i++) tmp[i] /= b;
+	return tmp;
+}
+VectorDouble& VectorDouble::operator+=(VectorDouble& b){
 	int i;
-	if(num==b.num) for (i = 0; i < num; i++) v[i] += b.v[i];
-	else
-	{	
+	if (num == b.num) 
+		for (i = 0; i < num; i++) Vec[i] += b.Vec[i];
+	else{
 		cout << " Warning: vectors of different sizes are used in operation += \n";
-		if (num < b.num) {
-			ComplexDouble* tmp;
-			tmp = new ComplexDouble[b.num];
-			for (i = 0; i < num; i++) tmp[i] = v[i] + b.v[i];
-			for (; i < b.num; i++) tmp[i] = b.v[i];
-			num = b.num;
-			if (v != nullptr) delete[] v;
-			v = tmp;
-		}
-		else for (i = 0; i < b.num; i++) v[i] += b.v[i];
 	}
 	return *this;
 }
-ComplexVector& ComplexVector::operator++(int)
-{
-	for (int i = 0; i < num; i++) v[i] += ComplexDouble(1,1);
-	return *this;
-}
-ComplexVector& ComplexVector::operator+=(const ComplexDouble& b)
-{
-	if (num > 0) {
-		for (int i = 0; i < num; i++) v[i] += b;
-	}
-	return *this;
-}
-ComplexVector& ComplexVector::operator+=(const double& b)
-{
-	if (num > 0) {
-		for (int i = 0; i < num; i++) v[i] += b;
-	}
-	return *this;
-}
-ComplexVector& ComplexVector::operator+=(const long& b)
-{
-	if (num > 0) {
-		for (int i = 0; i < num; i++) v[i] += b;
-	}
-	return *this;
-}
-ComplexVector ComplexVector::operator+(const ComplexVector& b)
-{
-	ComplexVector tmp(*this);
-	tmp += b;
-	return tmp;
-}
-ComplexVector ComplexVector::operator+(const ComplexDouble& b)
-{
-	ComplexVector tmp(*this);
-	tmp += b;
-	return tmp;
-}
-ComplexVector ComplexVector::operator+(const double& b)
-{
-	ComplexVector tmp(*this);
-	tmp += b;
-	return tmp;
-}
-ComplexVector ComplexVector::operator+(const long& b)
-{
-	ComplexVector tmp(*this);
-	tmp += b;
-	return tmp;
-}
-
-ComplexVector& ComplexVector::operator-=(const ComplexVector& b)
-{
+VectorDouble& VectorDouble::operator+=(VectorDouble&& b) {
 	int i;
-	if (num == b.num) for (i = 0; i < num; i++) v[i] += b.v[i];
-	else 	{
-			cout << " Warning: vectors of different sizes are used in operation -= \n";
-			if (num < b.num) {
-				ComplexDouble* tmp;
-				tmp = new ComplexDouble[b.num];
-				for (i = 0; i < num; i++) tmp[i] = v[i] - b.v[i];
-				for (; i < b.num; i++) tmp[i] = -b.v[i];
-				num = b.num;
-				if (v != nullptr) delete[] v;
-				v = tmp;
-			} 
-			else 	for (i = 0; i < b.num; i++) v[i] -= b.v[i];
+	if (num == b.num)
+		for (i = 0; i < num; i++) Vec[i] += b.Vec[i];
+	else {
+		cout << " Warning: vectors of different sizes are used in operation += \n";
 	}
 	return *this;
 }
-ComplexVector& ComplexVector::operator-=(const ComplexDouble& b)
-{
+VectorDouble& VectorDouble::operator+=(int b){
 	if (num > 0) {
-		for (int i = 0; i < num; i++) v[i] -= b;
+		for (int i = 0; i < num; i++) Vec[i] += b;
 	}
 	return *this;
 }
-ComplexVector& ComplexVector::operator-=(const double& b)
-{
+VectorDouble& VectorDouble::operator+=(float b){
 	if (num > 0) {
-		for (int i = 0; i < num; i++) v[i] -= b;
+		for (int i = 0; i < num; i++) Vec[i] += b;
 	}
 	return *this;
 }
-ComplexVector& ComplexVector::operator-=(const long& b)
-{
+VectorDouble& VectorDouble::operator-=(VectorDouble& b){
+	int i;
+	if (num == b.num) for (i = 0; i < num; i++) Vec[i] -= b.Vec[i];
+	else {
+		cout << " Warning: vectors of different sizes are used in operation -= \n";
+	}
+	return *this;
+}
+VectorDouble& VectorDouble::operator-=(VectorDouble&& b) {
+	int i;
+	if (num == b.num) for (i = 0; i < num; i++) Vec[i] -= b.Vec[i];
+	else {
+		cout << " Warning: vectors of different sizes are used in operation -= \n";
+	}
+	return *this;
+}
+VectorDouble& VectorDouble::operator-=(int b){
 	if (num > 0) {
-		for (int i = 0; i < num; i++) v[i] -= b;
+		for (int i = 0; i < num; i++) Vec[i] -= b;
 	}
 	return *this;
 }
-ComplexVector ComplexVector::operator-(const ComplexVector& b)
-{
-	ComplexVector tmp(*this);
-	tmp -= b;
-	return tmp;
-}
-ComplexVector ComplexVector::operator-(const ComplexDouble& b)
-{
-	ComplexVector tmp(*this);
-	tmp -= b;
-	return tmp;
-}
-ComplexVector ComplexVector::operator-(const double& b)
-{
-	ComplexVector tmp(*this);
-	tmp -= b;
-	return tmp;
-}
-ComplexVector ComplexVector::operator-(const long& b)
-{
-	ComplexVector tmp(*this);
-	tmp -= b;
-	return tmp;
-}
-
-ComplexDouble ComplexVector::operator*=(const ComplexVector& b)  //  r= a0*b0+a1*b1+...+an-1*bn-1
-{
-	ComplexDouble ret(0, 0);
-	if (num != b.num) { std::cout << " Error : vectors of different sizes are used in operation *= \n"; return ret; }
-	for (int i = 0; i < num; i++) ret += v[i] * b.v[i];
-	return ret;
-}
-ComplexVector& ComplexVector::operator%=(const  ComplexVector& b)  // (a0*b0, a1*b1,...,an-1*bn-1)
-{
-	if (num != b.num) { std::cout << " Error : vectors of different sizes are used in operation %= \n"; return *this; }
-	for (int i = 0; i < num; i++) v[i] *= b.v[i];
-	return *this;
-}
-ComplexVector& ComplexVector::operator*=(const ComplexDouble& b) {
-	for (int i = 0; i < num; i++) v[i] *= b;
-	return *this;
-}
-ComplexVector& ComplexVector::operator*=(const double& b) {
-	for (int i = 0; i < num; i++) v[i] *= b;
-	return *this;
-}
-ComplexVector& ComplexVector::operator*=(const long& b) {
-	for (int i = 0; i < num; i++) v[i] *= b;
-	return *this;
-}
-ComplexDouble ComplexVector::operator*(const ComplexVector& b)  //  r= a0*b0+a1*b1+...+an-1*bn-1
-{
-	//	ComplexVector rez(*this);
-	return *this * b;
-}
-ComplexVector ComplexVector::operator%(const ComplexVector& b)  // (a0*b0, a1*b1,...,an-1*bn-1)
-{
-	ComplexVector rez(*this);
-	rez *= b;
-	return rez;
-}
-ComplexVector ComplexVector::operator*(const ComplexDouble& b) {
-	ComplexVector rez(*this);
-	rez *= b;
-	return rez;
-}
-ComplexVector ComplexVector::operator*(const double& b) {
-	ComplexVector rez(*this);
-	rez *= b;
-	return rez;
-}
-ComplexVector ComplexVector::operator*(const long& b) {
-	ComplexVector rez(*this);
-	rez *= b;
-	return rez;
-}
-
-ComplexVector& ComplexVector::operator/=(const ComplexVector& b)  // (a0/b0, a1/b1,...,an-1/bn-1)
-{
-	if (num != b.num || ~b) { 
-		std::cout << " Error: vectors of different sizes are used or b is zer0 opreation %= \n"; 
-		return *this; }
-	for (int i = 0; i < num; i++) v[i] *= b.v[i];
-	return *this;
-}
-ComplexVector& ComplexVector::operator/=(const ComplexDouble& b)
-{
-	if (fabs(b.real()) < EpsCalculations && fabs(b.imag()) < EpsCalculations)
-	{
-		std::cout << " Error Vector opreation /= b \n";
+VectorDouble& VectorDouble::operator-=(float b){
+	if (num > 0) {
+		for (int i = 0; i < num; i++) Vec[i] -= b;
 	}
-	else for (int i = 0; i < num; i++) v[i] /= b;
 	return *this;
 }
-ComplexVector& ComplexVector::operator/=(const double& b) {
-	if (fabs(b) < EpsCalculations)
-	{
-		std::cout << " Error Vector opreation /= b \n";
+VectorDouble& VectorDouble::operator*=(int b) {
+	if (num > 0) {
+		for (int i = 0; i < num; i++) Vec[i] *= b;
 	}
-	else for (int i = 0; i < num; i++) v[i] /= b;
 	return *this;
 }
-ComplexVector& ComplexVector::operator/=(const long& b) {
-	if (fabs(b) < EpsCalculations)
-	{
-		std::cout << " Error Vector opreation /= b \n";
+VectorDouble& VectorDouble::operator*=(float b) {
+	if (num > 0) {
+		for (int i = 0; i < num; i++) Vec[i] *= b;
 	}
-	else for (int i = 0; i < num; i++) v[i] /= b;
 	return *this;
 }
-ComplexVector ComplexVector::operator/(const ComplexVector& b)  // (a0/b0, a1/b1,...,an-1/bn-1)
-{
-	ComplexVector rez(*this);
-	rez /= b;
-	return rez;
-}
-ComplexVector ComplexVector::operator/(const ComplexDouble& b) {
-	ComplexVector rez(*this);
-	rez /= b;
-	return rez;
-}
-ComplexVector ComplexVector::operator/(const double& b) {
-	ComplexVector rez(*this);
-	rez /= b;
-	return rez;
-}
-ComplexVector ComplexVector::operator/(const long& b) {
-	ComplexVector rez(*this);
-	rez /= b;
-	return rez;
-}
-
-bool ComplexVector::operator||(const ComplexVector& b)
-{
-	if (this->num > 0 || b.num > 0) return true;
-	return false;
-}
-
-bool ComplexVector::operator==(const ComplexVector& s)
-{
-	bool ret = true;
-	if (num != s.num) return false;
-	for (int i = 0; i < num && ret; i++) if (fabs(v[i].real() - s.v[i].real()) > EpsCalculations
-		|| fabs(v[i].imag() - s.v[i].imag()) > EpsCalculations) ret = false;
-		return ret;
-}
-
-bool ComplexVector::operator!=(const ComplexVector& s)
-{
-	return !(*this==s);
-}
-void ComplexVector::RandComplexVector()
-{
-	for (int i = 0; i < num; i++) v[i] = RandComplexDouble();
-}
-
-/// <summary>
-/// friend function 
-/// </summary>
-/// <param name="is"></param>
-/// <param name="s"></param>
-/// <returns></returns>
-istream& operator>>(istream& is, ComplexVector& s) {
-	for (int i = 0; i < s.num; i++)
-	{
-#if defined(_MSC_VER)
-		//cout << " v [ " << i << " ] real img  "; 
-		is >> s.v[i] >> s.v[i]._Val[_IM];
-#else 
-		double re, im;
-		// cout << " v [ " << i << " ] real img  "; 
-		is >> re >> im;
-		s.v[i].real(re);
-		s.v[i].imag(im);
-#endif		
+VectorDouble& VectorDouble::operator/=(int b) {
+	if (num > 0) {
+		for (int i = 0; i < num; i++) Vec[i] /= b;
 	}
-	return is;
-};
-ostream& operator<<(ostream& os, ComplexVector& s) {
-	for (int i = 0; i < s.num; i++)
-		os << s.v[i] << '\t';
-	os << endl;
-	return os;
+	return *this;
+}
+double& VectorDouble::operator[](int index) {
+	if (index >= 0 || index < num)
+		return Vec[index];
+	else {
+		cout << " Error : operator[] - index out of range \n";;
+		codeError = 1;
+		return Vec[0];
+	}
+}
+void VectorDouble::Output() {
+	if (num != 0) {
+		for (int i = 0; i < num; i++) {
+			cout << Vec[i] << "     ";
+		}
+	}
+}
+double VectorDouble::GetNum() {
+	return num;
+}
+double VectorDouble::GetVec(int k) {
+	return Vec[k];
 }
 
-ComplexVector& operator--(ComplexVector& s)
+int main() 
 {
-	s -= 1.0;
-	return s;
-}
+	VectorDouble B1(4, 10), B2(4, 50), B3(4, 5.5);
+	VectorDouble A1, A2(5), A3(4, 5);
+	std::cout << "Конструктор без параметрів: \n";
+	A1.Output(); 
+	std::cout << "\nКонструктор з одним параметром: \n";
+	A2.Output();
+	std::cout << "\nКонструктор з двома параметрами: \n";
+	A3.Output();
+	std::cout << "\nУнарний префікс ++: \n";
+	A3++;
+	A3.Output();
+	std::cout << "\nУнарний постфікс --: \n";
+	A3--;
+	A3.Output();
+	std::cout << "\nУнарне логічне ! : \n";
+	std::cout << !A3;
+	std::cout << "\nУнарний арифметичний - : \n";
+	-A3;
+	A3.Output();
+	std::cout << "\nПрисвоєння: копіює вектор : \n";
+	A3 = B2;
+	A3.Output();
+	std::cout << "\nДодавання двох векторів: \n";
+	A3 = B1 + B2;
+	A3.Output();
+	std::cout << "\nДодавання вектора і скаляра типу double: \n";
+	A3 = B1 + 90;
+	A3.Output();
+	std::cout << "\nВіднімання двох векторів: \n";
+	A3 = B2 - B1;
+	A3.Output();
+	std::cout << "\nВіднімання вектора і скаляра типу double: \n";
+	A3 = B2 - 30;
+	A3.Output();
+	std::cout << "\nМноження вектора і скаляра типу int: \n";
+	A3 = B2 * 10;
+	A3.Output();
+	std::cout << "\nМноження вектора і скаляра типу double: \n";
+	A3 = B2 * 2.4;
+	A3.Output();
+	std::cout << "\nДілення вектора і скаляра типу int: \n";
+	A3 = B2 / 10;
+	A3.Output();
+	std::cout << "\nДілення вектора і скаляра типу double: \n";
+	A3 = B2 / 2.5;
+	A3.Output();
+	std::cout << "\nПрисвоєння з додаванням двох векторів: \n";
+	A3 += B2;
+	A3.Output();
+	std::cout << "\nПрисвоєння з додаванням для вектора і скаляра типу int: \n";
+	A3 += 10;
+	A3.Output();
+	std::cout << "\nПрисвоєння з додаванням для вектора і скаляра типу float: \n";
+	A3 += (float)2.2;
+	A3.Output();
+	std::cout << "\nПрисвоєння з відніманням двох векторів: \n";
+	A3 -= B1;
+	A3.Output();
+	std::cout << "\nПрисвоєння з відніманням для вектора і скаляра типу int: \n";
+	A3 -= 10;
+	A3.Output();
+	std::cout << "\nПрисвоєння з відніманням для вектора і скаляра типу float: \n";
+	A3 -= (float)2.2;
+	A3.Output();
+	std::cout << "\nПрисвоєння з множення для вектора і скаляра типу int: \n";
+	A3 *= 3;
+	A3.Output();
+	std::cout << "\nПрисвоєння з множення для вектора і скаляра типу float: \n";
+	A3 *= (float)2.2;
+	A3.Output();
+	std::cout << "\nПрисвоєння з ділення для вектора і скаляра типу int: \n";
+	A3 /= 3;
+	A3.Output();
+	std::cout << "\nOперація індексації: \n";
+	std::cout << A3[3] << "\n";
 
-ComplexVector& operator--(ComplexVector& s, int)
-{
-	s -= ComplexDouble(1.0, 1.0);
-	return s;
-}
-
-bool operator&&(const ComplexVector& a, const ComplexVector& b)
-{
-	if (a.num > 0 && b.num > 0) return true;
-	return false;
-
+	return 0;
 }
